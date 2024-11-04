@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIVoiceSync Translator</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" crossorigin="anonymous">
+    <style>
+        .navbar {
+            overflow: hidden;
+            background-color: #e2dbdb;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #0c0c0c;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <div class="navbar">
+        <a href="Home.html">Home</a>
+        <a href="live.html" class="active">Live</a>
+        <a href="recording.html">Recording</a>
+    </div>
+
+    <section class="text-gray-400 bg-gray-900 body-font relative">
+        <div class="container px-5 py-24 mx-auto">
+            <div class="flex flex-col text-center w-full mb-12">
+                <h1 class="sm:text-3xl text-2xl font-medium title-font mb-4 text-white">AIVoiceSync Translator</h1>
+                <p class="lg:w-2/3 mx-auto leading-relaxed text-base"><h2>Translation is an act of re-creation</h2></p>
+            </div>
+            <div class="lg:w-1/2 md:w-2/3 mx-auto">
+                <div class="flex flex-wrap -m-2">
+                    <div class="p-2 w-1/2">
+                        <div class="relative">
+                            <label for="lang_one" class="leading-7 text-sm text-gray-400">Select First language</label>
+                            <select id="lang_one" name="lang_one" class="w-full bg-gray-800 bg-opacity-40 rounded border border-gray-700 focus:border-indigo-500 focus:bg-gray-900 focus:ring-2 focus:ring-indigo-900 text-base outline-none text-gray-100 py-2 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                                <option value="en">English</option>
+                                <option value="mr">Marathi</option>
+                                <option value="hi">Hindi</option>
+                                <option value="ta">Tamil</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="p-2 w-1/2">
+                        <div class="relative">
+                            <label for="lang_two" class="leading-7 text-sm text-gray-400">Select Second language</label>
+                            <select id="lang_two" name="lang_two" class="w-full bg-gray-800 bg-opacity-40 rounded border border-gray-700 focus:border-indigo-500 focus:bg-gray-900 focus:ring-2 focus:ring-indigo-900 text-base outline-none text-gray-100 py-2 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                                <option value="en">English</option>
+                                <option value="hi">Hindi</option>
+                                <option value="mr">Marathi</option>
+                                <option value="ta">Tamil</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="p-2 w-full">
+                        <button id="convert">Start Translation
+                            <i class="fas fa-microphone"></i> <!-- Microphone icon -->
+                        </button>
+                        <button id="stop">Stop Translation</button> <!-- Stop translation button -->
+                    </div>
+                    
+                    <div class="p-2 w-full pt-8 mt-8 border-t border-gray-800 text-center" id="audio-button-container" style="display: none;">
+                        <audio controls id="translated-audio"></audio> <!-- Audio player -->
+                    </div>
+                    
+                    <div class="p-2 w-full pt-8 mt-8 border-t border-gray-800 text-center">
+                        <a class="text-indigo-400">crce@email.com</a>
+                        <br>
+                        <!-- Social media icons -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section> 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        var recognition; // Declare recognition variable outside click event
+
+        document.getElementById('convert').addEventListener('click', function() {
+            recognition = new webkitSpeechRecognition(); // Initialize recognition here
+            recognition.lang = document.getElementById('lang_one').value; // Set the language for recognition
+            recognition.onresult = function(event) {
+                var speechResult = event.results[0][0].transcript;
+                console.log(speechResult); // Print the recognized speech
+            };
+
+            recognition.start(); // Start speech recognition
+
+            // Show alert when "Speak Now" is printed in the terminal
+            fetch('http://localhost:5500/start_translation', {
+                method: 'POST', // Specify the request method as POST
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    input_lang: document.getElementById('lang_one').value,
+                    output_lang: document.getElementById('lang_two').value
+                })
+            })
+            .then(response => response.blob())
+            .then(data => {
+                console.log(data);
+                if (data.size > 0) {
+                    var audioUrl = URL.createObjectURL(data);
+                    var audioPlayer = document.getElementById('translated-audio');
+                    audioPlayer.src = audioUrl;
+                    audioPlayer.play(); // Play the audio
+                    document.getElementById('audio-button-container').style.display = 'block'; // Show the audio player container
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Stop translation function
+        document.getElementById('stop').addEventListener('click', function() {
+            if (recognition) {
+                recognition.stop(); // Stop speech recognition if it's running
+            }
+            stopTranslation(); // Call the stopTranslation function
+        });
+
+        // Function to stop translation
+        function stopTranslation() {
+            fetch('http://localhost:5500/stop_translation', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                document.getElementById('audio-button-container').style.display = 'none'; // Hide the audio player container
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Stop translation when the page is closed or refreshed
+        window.addEventListener('beforeunload', function(event) {
+            stopTranslation();
+        });
+    </script>
+</body>
+</html>

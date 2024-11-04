@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha384-..." crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIVoiceSync Translator</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <style>
+        .navbar {
+            overflow: hidden;
+            background-color: #e2dbdb;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #0c0c0c;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900">
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+    <div class="navbar">
+        <a href="Home.html">Home</a>
+        <a href="live.html" class="active">Live</a>
+        <a href="recording.html">Recording</a>
+    </div>
+
+    <section class="text-gray-400 bg-gray-900 body-font relative">
+        <div class="container px-5 py-24 mx-auto">
+            <div class="flex flex-col text-center w-full mb-12">
+                <h1 class="sm:text-3xl text-2xl font-medium title-font mb-4 text-white">AIVoiceSync Translator</h1>
+                <p class="lg:w-2/3 mx-auto leading-relaxed text-base">
+                    <h2>Translation is an act of re-creation</h2>
+                </p>
+            </div>
+            <div class="lg:w-1/2 md:w-2/3 mx-auto">
+                <div class="flex flex-wrap -m-2">
+                    <div class="p-2 w-1/2">
+                        <div class="relative">
+                            <label for="lang_one" class="leading-7 text-sm text-gray-400">Select Input language</label>
+                            <select id="lang_one" name="lang_one"
+                                class="w-full bg-gray-800 bg-opacity-40 rounded border border-gray-700 focus:border-indigo-500 focus:bg-gray-900 focus:ring-2 focus:ring-indigo-900 text-base outline-none text-gray-100 py-2 px-3 leading-8 transition-colors duration-200 ease-in-out">
+
+                                <option value="en">English</option>
+                                <option value="mr">Marathi</option>
+                                <option value="hi">Hindi</option>
+                                <option value="ta">Tamil</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="p-2 w-1/2">
+                        <div class="relative">
+                            <label for="lang_two" class="leading-7 text-sm text-gray-400">Select Output language</label>
+                            <select id="lang_two" name="lang_two"
+                                class="w-full bg-gray-800 bg-opacity-40 rounded border border-gray-700 focus:border-indigo-500 focus:bg-gray-900 focus:ring-2 focus:ring-indigo-900 text-base outline-none text-gray-100 py-2 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                                <option value="en">English</option>
+                                <option value="mr">Marathi</option>
+                                <option value="hi">Hindi</option>
+                                <option value="ta">Tamil</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="p-2 w-full">
+                        <div class="relative">
+                            <label for="record" class="leading-7 text-sm text-gray-400">Upload Recording</label>
+                            <div
+                                class="w-full bg-gray-800 bg-opacity-40 rounded border border-gray-700 focus:border-indigo-500 focus:bg-gray-900 focus:ring-2 focus:ring-indigo-900 h-32 text-base outline-none text-gray-100 py-1 px-3 resize-none leading-6 transition-colors duration-200 ease-in-out">
+                                <div id="recordingpart" class="flex items-center justify-center h-full">
+                                    <div class="text-center w-full">
+                                        <input type="file" name="record" id="record" accept="audio/mp4, audio/mpeg">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-2 w-full">
+                        <div class="relative">
+                            <button id="translateBtn"
+                                class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Translate
+                                and Convert</button>
+                        </div>
+                    </div>
+                    <audio controls id="translated-audio" style="display: none;">
+                        <!-- Initially hidden -->
+                        <source src="" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+            
+                    <button id="playAudioBtn" class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg"
+                        style="display: none;">Play Translated Audio</button>
+            
+                    <button id="downloadAudioBtn" class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg"
+                        style="display: none;">Download Translated Audio</button>
+                    <div class="p-2 w-full pt-8 mt-8 border-t border-gray-800 text-center">
+                        <a class="text-indigo-400">crce@email.com</a>
+                        <br>
+                        <span class="inline-flex">
+                            <!-- Social icons -->
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const translateBtn = document.getElementById('translateBtn');
+            const langOneSelect = document.getElementById('lang_one');
+            const langTwoSelect = document.getElementById('lang_two');
+            const recordingInput = document.getElementById('record');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+
+            translateBtn.addEventListener('click', function () {
+                const srcLang = langOneSelect.value;
+                const destLang = langTwoSelect.value;
+                const recording = recordingInput.files[0];
+
+                if (!recording) {
+                    alert('Please select a recording.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('lang_one', srcLang);
+                formData.append('lang_two', destLang);
+                formData.append('record', recording);
+
+                // Show loading overlay after a delay of 10 seconds
+                setTimeout(function () {
+                    loadingOverlay.style.display = 'flex';
+                }, 10000);
+
+                fetch('http://localhost:5500/translate', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'translated_audio.mp3';
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(error => {
+                        alert('Error: ' + error.message);
+                    })
+                    .finally(() => {
+                        loadingOverlay.style.display = 'none';
+                    });
+            });
+        });
+    </script>
+
+</body>
+
+</html>
